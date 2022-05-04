@@ -8,6 +8,6 @@
 1	follow	～の後に続く、～に従う
 2	consider	～を考慮する
 3	increase	増える、～を増やす
-![image](https://user-images.githubusercontent.com/81465908/166720502-26d7e9f5-e03f-41b6-830e-c3700d0104f5.png)
+…
 
 - 作成できるファイルはシステム英単語/ターゲットフォルダに一部例を上げております．

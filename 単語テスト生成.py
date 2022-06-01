@@ -107,9 +107,10 @@ def formatting(database, start, end):
 
 
 def main():
-    database_dict = {'1': "システム英単語", '2': "ターゲット"}
-    database_number = input('数字を入力してください．システム英単語：1 ターゲット：2\n:')
-    data = pd.read_csv('{}.csv'.format(database_dict[database_number]))
+    database_dict = {'1': "システム英単語", '2': "ターゲット", '3': "LEAP", '4': "鉄壁", '5': "マドンナ古文", '6': "古文単語315"}
+    database_number = input('数字を半角で入力してください．システム英単語：1, ターゲット：2, LEAP: 3, \n \
+鉄壁: 4, マドンナ古文: 5, 古文単語315: 6\n:')
+    data = pd.read_csv('word_data/{}.csv'.format(database_dict[database_number]))
     print('範囲を選択してください\nどこからどこまでの範囲から選ぶか')
     start, end = input_start_to_end()
     selected_data = random_selection(data=data, start=start, end=end)

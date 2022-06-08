@@ -7,18 +7,6 @@ import shutil
 import string
 
 
-def input_start_to_end():
-    """
-    テスト範囲を選択．
-    'Start?' => 開始位置．半角数字
-    'End?'   => 終了位置．半角数字
-    :return: int:start, int:end
-    """
-    start = int(input('Start?'))
-    end = int(input('End?'))
-    return start, end
-
-
 def random_selection(data, start=1, end=100, how=40):
     """
     dataから，howにより指定された数だけランダムにデータを取り出す
@@ -28,7 +16,8 @@ def random_selection(data, start=1, end=100, how=40):
     :param how: int
     :return: DataFrame
     """
-    test = data.iloc[start: end].sample(n=how)
+
+    test = data.iloc[start-1: end].sample(n=how)
     return test
 
 
@@ -41,22 +30,21 @@ def create_excel(selected_data, start=1, end=100):
     :param end: int:ファイル名に使用
     :return: None
     """
+    if os.path.exists('tmpdir'):
+        shutil.rmtree('tmpdir/')
     os.mkdir('tmpdir')
     pd.DataFrame.to_excel(selected_data, 'tmpdir/test_{}-{}.xlsx'.format(start, end), index=None, header=None)
 
 
-def formatting(database, start, end):
+def formatting(database, start, end, how):
     """
     excelファイルに対しフォーマッティング，解答プリントの解答部分を消去しテストプリントとして保存
     1.各カラムの幅を指定
     2.枠線を引く
     3.テストプリントの作成
     4.tmpdirフォルダの消去
-    :param database:
-    :param start:
-    :param end:
-    :return:
     """
+
     filepaths = glob('tmpdir/test*.xlsx')
     for filepath in filepaths:
         wb = openpyxl.load_workbook(filepath)
@@ -69,10 +57,10 @@ def formatting(database, start, end):
         widths[1] = 17
         widths[2] = 65
 
-        sh.move_range('A1:C40', rows=2)
+        sh.move_range('A1:C{}'.format(how), rows=2)
         sh['A1'] = "{}テスト".format(database)
         sh['A1'].font = Font(bold=True)
-        sh['C1'] = "{}-{}".format(start, end)
+        sh['C1'] = "{}-{}                                            /{}点満点中".format(start, end, how)
         sh['C1'].font = Font(bold=True)
 
         width_prefs ={}
@@ -106,16 +94,39 @@ def formatting(database, start, end):
     shutil.rmtree('tmpdir/')
 
 
+class InputError(Exception):
+    pass
+
+
 def main():
-    database_dict = {'1': "システム英単語", '2': "ターゲット", '3': "LEAP", '4': "鉄壁", '5': "マドンナ古文", '6': "古文単語315"}
-    database_number = input('数字を半角で入力してください．システム英単語：1, ターゲット：2, LEAP: 3, \n \
-鉄壁: 4, マドンナ古文: 5, 古文単語315: 6\n:')
-    data = pd.read_csv('word_data/{}.csv'.format(database_dict[database_number]))
-    print('範囲を選択してください\nどこからどこまでの範囲から選ぶか')
-    start, end = input_start_to_end()
-    selected_data = random_selection(data=data, start=start, end=end)
+    database_dict = {1: "システム英単語", 2: "ターゲット", 3: "LEAP", 4: "鉄壁", 5: "マドンナ古文", 6: "古文単語315"}
+    database_number = int(input('数字を入力してください．システム英単語：1, ターゲット：2, LEAP: 3, \n \
+鉄壁: 4, マドンナ古文: 5, 古文単語315: 6\n:'))
+    if database_number not in database_dict.keys():
+        raise InputError('有効な数字を選択してください．')
+
+    data = pd.read_csv('_word_data/{}.csv'.format(database_dict[database_number]))
+    word_count = data.shape[0]
+
+    is_valid = False
+    while (is_valid == False):
+        print('範囲を選択してください(1-{})\n1)どこから 2)どこまでの範囲で 3)何単語選ぶか'.format(word_count))
+        start = int(input('Start?\n:'))
+        end = int(input('End?\n:'))
+
+        if start < 1 or start > word_count or end < 1 or end > word_count or start >= end:
+            print("範囲選択ミスです．1-{}から選択し直してください．".format(word_count))
+            continue
+        is_valid = True
+
+    how = int(input('How many?　(Recommendation: 40)\n:'))
+
+    if how > end - start + 1 or how < 1:
+        how = end - start + 1
+        print('全選択範囲からの出題に設定しました．')
+    selected_data = random_selection(data=data, start=start, end=end, how=how)
     create_excel(selected_data, start=start, end=end)
-    formatting(database_dict[database_number], start=start, end=end)
+    formatting(database_dict[database_number], start=start, end=end, how=how)
 
 
 if __name__ == '__main__':
